@@ -38,11 +38,25 @@ button {
   overflow: auto;
 }
 
+.left input {
+  width: 100%;
+  margin-bottom: 10px;
+  z-index: 10;
+  position: relative;
+}
+
+
 .right {
   width: 70%;
   display: flex;
   flex-direction: column;
 }
+
+.right input {
+  position: relative;
+  z-index: 1;
+}
+
 
 .conv {
   padding: 10px;
