@@ -20,6 +20,7 @@ export default function App() {
   const bottomRef = useRef(null);
 
   // ---------------- AUTH ----------------
+
   function login() {
     fetch(API + "/login", {
       method: "POST",
@@ -44,6 +45,7 @@ export default function App() {
   }
 
   // ---------------- LOADERS ----------------
+
   function loadConvs() {
     fetch(API + "/conversations/" + uid)
       .then((r) => r.json())
@@ -61,10 +63,12 @@ export default function App() {
   }
 
   // ---------------- SEND ----------------
+
   function send() {
     if (!text.trim() || !current) return;
 
     const msg = text;
+
     setMessages([...messages, { sender: uid, text: msg }]);
     setText("");
 
@@ -78,15 +82,19 @@ export default function App() {
   }
 
   // ---------------- SEARCH ----------------
+
   useEffect(() => {
     if (search) {
       fetch(API + "/search?q=" + search)
         .then((r) => r.json())
         .then(setResults);
-    } else setResults([]);
+    } else {
+      setResults([]);
+    }
   }, [search]);
 
-  // ---------------- ONLINE PING ----------------
+  // ---------------- ONLINE + REALTIME ----------------
+
   useEffect(() => {
     if (!uid) return;
 
@@ -98,17 +106,7 @@ export default function App() {
       });
     }, 5000);
 
-    return () => clearInterval(ping);
-  }, [uid]);
-
-  // ---------------- REALTIME ----------------
-  useEffect(() => {
-    if (!uid) return;
-
-    loadConvs();
-
     const convTimer = setInterval(loadConvs, 2000);
-
     const msgTimer = setInterval(() => {
       if (current) openChat(current);
     }, 1000);
@@ -126,6 +124,7 @@ export default function App() {
     }, 1500);
 
     return () => {
+      clearInterval(ping);
       clearInterval(convTimer);
       clearInterval(msgTimer);
       clearInterval(typingTimer);
@@ -133,6 +132,7 @@ export default function App() {
   }, [uid, current]);
 
   // ---------------- UI ----------------
+
   if (!uid)
     return (
       <div className="login">
@@ -148,62 +148,56 @@ export default function App() {
     <div className="app">
       {/* LEFT */}
       <div className="left">
-        <input
-          placeholder="Search user"
-          value={search}
-          onChange={(e) => {
-              setText(e.target.value);
+        <div className="search-box">
+          <input
+            placeholder="Search user"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
 
-              if (current && e.target.value.trim() !== "") {
-                fetch(API + "/typing", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                  body: `chat_id=${current.chat_id}&uid=${uid}`,
-                });
-              }
-            }}
-        />
+        <div className="chat-list">
+          {search &&
+            results.map((u) => (
+              <div
+                key={u.id}
+                className="conv"
+                onClick={() => {
+                  fetch(API + "/start_chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: `a=${uid}&b=${u.id}`,
+                  })
+                    .then((r) => r.json())
+                    .then((c) => {
+                      openChat({ chat_id: c.chat_id, username: u.username, user_id: u.id });
+                      setSearch("");
+                      setResults([]);
+                      loadConvs();
+                    });
+                }}
+              >
+                {u.username}
+              </div>
+            ))}
 
-        {search &&
-          results.map((u) => (
-            <div
-              key={u.id}
-              className="conv"
-              onClick={() => {
-                fetch(API + "/start_chat", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                  body: `a=${uid}&b=${u.id}`,
-                })
-                  .then((r) => r.json())
-                  .then((c) => {
-                    openChat({ chat_id: c.chat_id, username: u.username, user_id: u.id });
-                    setSearch("");
-                    setResults([]);
-                    loadConvs();
-                  });
-              }}
-            >
-              {u.username}
-            </div>
-          ))}
-
-        {!search &&
-          convs.map((c) => (
-            <div key={c.chat_id} className="conv" onClick={() => openChat(c)}>
-              <b>{c.username}</b>
-              <p>{c.last_message}</p>
-            </div>
-          ))}
+          {!search &&
+            convs.map((c) => (
+              <div key={c.chat_id} className="conv" onClick={() => openChat(c)}>
+                <b>{c.username}</b>
+                <p>{c.last_message}</p>
+              </div>
+            ))}
+        </div>
       </div>
 
       {/* RIGHT */}
       <div className="right">
-        <h3>
-          {current?.username || "Select chat"}{" "}
-          {current && <span style={{ fontSize: "12px" }}>{online ? "🟢 Online" : "⚫ Offline"}</span>}{" "}
-          <span style={{ fontSize: "12px" }}>{typing}</span>
-        </h3>
+        <div className="header">
+          {current?.username || "Select chat"}
+          {current && <span>{online ? "🟢 Online" : "⚫ Offline"}</span>}
+          <span>{typing}</span>
+        </div>
 
         <div className="msgs">
           {messages.map((m, i) => (
@@ -214,21 +208,24 @@ export default function App() {
           <div ref={bottomRef}></div>
         </div>
 
-        <input
-          value={text}
-          onChange={(e) => {
-            setText(e.target.value);
-            if (current)
-              fetch(API + "/typing", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: `chat_id=${current.chat_id}&uid=${uid}`,
-              });
-          }}
-          onKeyDown={(e) => e.key === "Enter" && send()}
-          placeholder="Message"
-        />
-        <button onClick={send}>Send</button>
+        <div className="send-box">
+          <input
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value);
+              if (current && e.target.value.trim() !== "") {
+                fetch(API + "/typing", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                  body: `chat_id=${current.chat_id}&uid=${uid}`,
+                });
+              }
+            }}
+            onKeyDown={(e) => e.key === "Enter" && send()}
+            placeholder="Message"
+          />
+          <button onClick={send}>Send</button>
+        </div>
       </div>
     </div>
   );
