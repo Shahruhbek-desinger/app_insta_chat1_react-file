@@ -83,15 +83,27 @@ export default function App() {
 
   // ---------------- SEARCH ----------------
 
-  useEffect(() => {
-    if (search) {
-      fetch(API + "/search?q=" + search)
-        .then((r) => r.json())
-        .then(setResults);
-    } else {
-      setResults([]);
-    }
-  }, [search]);
+useEffect(() => {
+  if (!search.trim()) {
+    setResults([]);
+    return;
+  }
+
+  fetch(API + "/search?q=" + encodeURIComponent(search))
+    .then((r) => {
+      if (!r.ok) throw new Error("Search API error");
+      return r.json();
+    })
+    .then((data) => {
+      if (Array.isArray(data)) {
+        setResults(data);
+      } else {
+        setResults([]);
+      }
+    })
+    .catch(() => setResults([]));
+}, [search]);
+
 
   // ---------------- ONLINE + REALTIME ----------------
 
