@@ -169,30 +169,37 @@ useEffect(() => {
         </div>
 
         <div className="chat-list">
-          {search &&
-            results.map((u) => (
-              <div
-                key={u.id}
-                className="conv"
-                onClick={() => {
-                  fetch(API + "/start_chat", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: `a=${uid}&b=${u.id}`,
-                  })
-                    .then((r) => r.json())
-                    .then((c) => {
-                      openChat({ chat_id: c.chat_id, username: u.username, user_id: u.id });
-                      setSearch("");
-                      setResults([]);
-                      loadConvs();
-                    });
-                }}
-              >
-                {u.username}
-              </div>
-            ))}
+          {search.trim() !== "" && results.length === 0 && (
+  <div className="conv">No users found</div>
+)}
 
+{search.trim() !== "" &&
+  results.map((u) => (
+    <div
+      key={u.id}
+      className="conv"
+      onClick={() => {
+        fetch(API + "/start_chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: `a=${uid}&b=${u.id}`,
+        })
+          .then((r) => r.json())
+          .then((c) => {
+            openChat({
+              chat_id: c.chat_id,
+              username: u.username,
+              user_id: u.id,
+            });
+            setSearch("");
+            setResults([]);
+            loadConvs();
+          });
+      }}
+    >
+      <b>{u.username}</b>
+    </div>
+  ))}
           {!search &&
             convs.map((c) => (
               <div key={c.chat_id} className="conv" onClick={() => openChat(c)}>
