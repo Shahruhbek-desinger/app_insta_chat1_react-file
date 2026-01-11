@@ -19,6 +19,27 @@ export default function App() {
 
   const bottomRef = useRef(null);
 
+
+import { getToken } from "firebase/messaging";
+import { messaging } from "./firebase";
+
+useEffect(() => {
+  if (!uid) return;
+
+  Notification.requestPermission().then((perm) => {
+    if (perm === "granted") {
+      getToken(messaging, { vapidKey: "B01C_2VsXce_BnuRRLYkYfnyxc-uByecHFDIPaE2rHWc5toSkmOqJnu8yzAcEvgokeI8pffkADqgZRclUpsU0o" }).then((token) => {
+        fetch(API + "/save_token", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: `uid=${uid}&token=${token}`,
+        });
+      });
+    }
+  });
+}, [uid]);
+
+
   // ---------------- AUTH ----------------
 
   function login() {
