@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-const API = "http://127.0.0.1:8000";
+const API = "https://app-insta-chat1-3.onrender.com";
 
 export default function App() {
   const [uid, setUid] = useState(localStorage.uid || "");
